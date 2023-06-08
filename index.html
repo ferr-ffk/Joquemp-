@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joquempô com js e html</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: rgb(15 15 15);
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        button.jogada {
+            font-size: 2.5rem;
+            cursor: pointer;
+            background-color: rgb(42 42 42);
+            border: 2px solid white;
+            height: 6rem;
+            width: 6rem;
+            padding: 1rem;
+            border-radius: 50%;
+            user-select: none;
+        }
+
+        div.resetar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 2rem;
+        }
+
+        button.reset {
+            background-color: rgb(42 42 42);
+            border: 2px solid black;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            padding: .5rem;
+            margin: 0 2rem;
+        }
+
+        button:active {
+            opacity: 0.7;
+        }
+
+        .js-pontuacao {
+            display: flex;
+            font-size: 0.8rem;
+            align-items: center;
+        }
+
+        img {
+            margin: 1rem;
+            height: 4rem;
+            aspect-ratio: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Pedra Papel Tesoura</h1>
+        <p>Escolha uma opção:</p>
+        <div>
+            <button id="pedra" class="jogada">✊</button>
+            <button id="tesoura" class="jogada">✌</button>
+            <button id="papel" class="jogada">✋</button>
+        </div>
+        <div class="resetar">
+            <button id="reset" class="reset">Resetar Jogadas</button>
+        </div>
+        <button id="auto-play" class="reset">Auto Play</button>
+        <p class="js-pontuacao">Jogue para obter sua pontuação!</p>
+    </div>
+    <script>
+        let pontuacao = JSON.parse(localStorage.getItem('pontuacao')) || {
+            numVitorias: 0,
+            numEmpates: 0,
+            numDerrotas: 0
+        };
+
+        let jogadaUsuario = '';
+        let jogadaComputador = '';
+        let resultado = '';
+        let isAutoPlaying = false;
+        let idIntervalo;
+        let botaoAutoPlay = document.querySelector(`#auto-play`);
+        let botaoReset = document.querySelector('#reset');
+        let botaoPedra = document.querySelector('#pedra');
+        let botaoTesoura = document.querySelector('#tesoura');
+        let botaoPapel = document.querySelector('#papel');
+
+        document.body.addEventListener('keydown', (event) => {
+            if (event.key === 'a') {
+                botaoAutoPlay.innerHTML = 'Parar AutoPlay';
+                if (!isAutoPlaying) {
+                    botaoAutoPlay.style = 'opacity: 0.6';
+                    idIntervalo = setInterval(() => {
+                        jogadaUsuario = obterJogadaComputador();
+                        jogadaComputador = obterJogadaComputador();
+
+                        compararJogadas();
+                    }, 1000);
+                    isAutoPlaying = true;
+                } else {
+                    botaoAutoPlay.innerHTML = 'Auto Play';
+                    botaoAutoPlay.style = 'opacity: 1';
+                    clearInterval(idIntervalo);
+                    isAutoPlaying = false;
+                }
+            }
+            if (event.key === 'Backspace') {
+                pontuacao.numDerrotas = 0;
+                pontuacao.numEmpates = 0;
+                pontuacao.numVitorias = 0;
+                localStorage.removeItem('pontuacao');
+                document.querySelector('.js-pontuacao').innerHTML = 'Pontuação zerada.';
+            }
+        });
+
+        function obterJogadas() {
+            jogadaUsuario = obterJogadaUsuario();
+            jogadaComputador = obterJogadaComputador();
+        }
+
+        botaoPedra.addEventListener('click', () => {
+            compararJogadas();
+        });
+
+        botaoPapel.addEventListener('click', () => {
+            compararJogadas();
+        });
+
+        botaoTesoura.addEventListener('click', () => {
+            compararJogadas();
+        });
+
+        botaoReset.addEventListener('click', () => {
+            exibirConfirmacaoReset();
+        });
+
+        botaoAutoPlay.addEventListener('click', () => {
+            if (!isAutoPlaying) {
+                botaoAutoPlay.innerHTML = 'Parar Auto Play';
+                botaoAutoPlay.style = 'opacity: 0.6';
+                idIntervalo = setInterval(() => {
+                    jogadaUsuario = obterJogadaComputador();
+                    jogadaComputador = obterJogadaComputador();
+
+                    compararJogadas();
+                }, 1000);
+                isAutoPlaying = true;
+            } else {
+                botaoAutoPlay.innerHTML = 'Auto Play';
+                botaoAutoPlay.style = 'opacity: 1';
+                clearInterval(idIntervalo);
+                isAutoPlaying = false;
+            }
+        });
+
+        function obterJogadaComputador() {
+            let numeroRand = Math.floor(Math.random() * 3);
+            switch (numeroRand) {
+                case 0:
+                    return 'papel';
+                case 1:
+                    return 'pedra';
+                case 2:
+                    return 'tesoura';
+                default:
+                    return 'papel';
+            }
+        }
+
+        function obterJogadaUsuario() {
+            var jogada = event.target.id;
+            localStorage.setItem('pontuacao', JSON.stringify(pontuacao));
+            // armazena as jogadas no armazenamento local, tornando assim
+            // elas acessíveis mesmo depois de atualizar a página
+            return jogada;
+        }
+
+        function compararJogadas(usuario, computador) {
+            botaoReset = document.querySelector('#reset');
+            if (!usuario) {
+                jogadaUsuario = obterJogadaComputador();
+                jogadaComputador = obterJogadaComputador();
+            } else {
+                obterJogadas();
+            }
+            if (jogadaUsuario === jogadaComputador) {
+                resultado = 'empate!';
+                pontuacao.numEmpates++;
+            } else if (
+                (jogadaUsuario === 'pedra' && jogadaComputador == 'tesoura') ||
+                (jogadaUsuario === 'papel' && jogadaComputador === 'pedra') || (jogadaUsuario === 'tesoura' && jogadaComputador === 'papel')) {
+                resultado = 'você ganhou!';
+                pontuacao.numVitorias++;
+            } else {
+                resultado = 'você perdeu!';
+                pontuacao.numDerrotas++;
+            }
+
+            document.querySelector('.js-pontuacao').innerHTML = `Você jogou <img src="imagens/${jogadaUsuario}.png" alt="">, o computador jogou <img src="imagens/${jogadaComputador}.png" alt="">, ${resultado}\nVitórias: ${pontuacao.numVitorias} Derrotas: ${pontuacao.numDerrotas} Empates: ${pontuacao.numEmpates}`
+        }
+
+        function resetJogadas() {
+            pontuacao.numDerrotas = 0;
+            pontuacao.numEmpates = 0;
+            pontuacao.numVitorias = 0;
+            localStorage.removeItem('pontuacao');
+            document.querySelector('.js-pontuacao').innerHTML = 'Pontuação zerada.';
+        }
+
+        function exibirConfirmacaoReset() {
+            document.querySelector('.resetar').innerHTML = "<p>Tem certeza que quer resetar a pontuação?</p><button class='reset sim-reset'>Sim</button><button class='reset nao-reset'>Não</button>";
+            document.querySelector('.sim-reset').addEventListener('click', () => {
+                resetJogadas();
+                esconderConfirmacaoReset();
+            });
+
+            document.querySelector('.nao-reset').addEventListener('click', () => {
+                esconderConfirmacaoReset();
+            });
+        }
+
+        function esconderConfirmacaoReset() {
+            document.querySelector('.resetar').innerHTML = '<button id="reset" class="reset">Resetar Jogadas</button>';
+
+            document.querySelector('#reset').addEventListener('click', () => {
+                exibirConfirmacaoReset();
+            });
+        }
+    </script>
+</body>
+
+</html>
